@@ -17,7 +17,7 @@ __all__ = ['ImagenetDataProvider']
 
 
 class ImagenetDataProvider(DataProvider):
-	DEFAULT_PATH = '/dataset/imagenet'
+	DEFAULT_PATH = '/home/datasets/imagenet'
 
 	def __init__(self, save_path=None, train_batch_size=256, test_batch_size=512, valid_size=None, n_worker=32,
 	             resize_scale=0.08, distort_color=None, image_size=224,

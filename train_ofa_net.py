@@ -224,12 +224,14 @@ if __name__ == '__main__':
         from ofa.imagenet_classification.elastic_nn.training.progressive_shrinking import train_elastic_depth
         if args.phase == 1:
             args.ofa_checkpoint_path = download_url(
-                'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K357',
+                #'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K357',
+                'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K7',
                 model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
             )
         else:
             args.ofa_checkpoint_path = download_url(
-                'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D34_E6_K357',
+                #'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D34_E6_K357',
+                'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K7',
                 model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
             )
         train_elastic_depth(train, distributed_run_manager, args, validate_func_dict)
