@@ -57,8 +57,10 @@ class AANet(MyNetwork):
         elif feature_type == 'aanet':
             if feature_blocks is None:
                 self.feature_extractor = AANetFeature(feature_mdconv=(not no_feature_mdconv))
+                self.ofa_search = False
             else:
                 self.feature_extractor = nn.ModuleList(feature_blocks)
+                self.ofa_search = True
             self.max_disp = max_disp // 3
         else:
             raise NotImplementedError
@@ -136,10 +138,23 @@ class AANet(MyNetwork):
                 raise NotImplementedError
 
     def feature_extraction(self, img):
-        feature = self.feature_extractor(img)
-        if self.feature_pyramid_network or self.feature_pyramid:
-            feature = self.fpn(feature)
-        return feature
+        # blocks
+        features = None
+        if self.ofa_search:
+            x = img
+            features = [x]
+            for block in self.feature_extractor:
+                x = block(x)
+                if x.size()[-1] == features[-1].size()[-1]:
+                    features[-1] = x
+                else:
+                    features.append(x)
+            features.pop(0)
+        else:
+            feature = self.feature_extractor(img)
+            if self.feature_pyramid_network or self.feature_pyramid:
+                feature = self.fpn(feature)
+        return features
 
     def cost_volume_construction(self, left_feature, right_feature):
         cost_volume = self.cost_volume(left_feature, right_feature)
@@ -218,3 +233,11 @@ class AANet(MyNetwork):
                                                        disparity_pyramid[-1])
 
         return disparity_pyramid
+
+    @property
+    def module_str(self):
+        _str = ''
+        for block in self.feature_extractor:
+            _str += block.module_str + '\n'
+        return _str
+

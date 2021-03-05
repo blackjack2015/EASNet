@@ -17,6 +17,7 @@ from tqdm import tqdm
 from ofa.utils import get_net_info, cross_entropy_loss_with_soft_target, cross_entropy_with_label_smoothing, aanet_loss
 from ofa.utils import AverageMeter, accuracy, write_log, mix_images, mix_labels, init_models
 from ofa.utils import MyRandomResizedCrop
+from ofa.utils import d1_metric, thres_metric
 
 __all__ = ['RunManager']
 
@@ -59,7 +60,7 @@ class RunManager:
 
         # criterion
         self.train_criterion = aanet_loss
-        self.test_criterion = nn.CrossEntropyLoss()
+        self.test_criterion = aanet_loss
 
         # optimizer
         if self.run_config.no_decay_keys:
@@ -194,11 +195,11 @@ class RunManager:
         thres1 = thres_metric(pred_disp, gt_disp, mask, 1.0)
         thres2 = thres_metric(pred_disp, gt_disp, mask, 2.0)
         thres3 = thres_metric(pred_disp, gt_disp, mask, 3.0)
-        metric_dict['epe'].update(epe.item(), output.size(0))
-        metric_dict['d1'].update(d1.item(), output.size(0))
-        metric_dict['thres1'].update(thres1.item(), output.size(0))
-        metric_dict['thres2'].update(thres2.item(), output.size(0))
-        metric_dict['thres3'].update(thres3.item(), output.size(0))
+        metric_dict['epe'].update(epe.item(), pred_disp.size(0))
+        metric_dict['d1'].update(d1.item(), pred_disp.size(0))
+        metric_dict['thres1'].update(thres1.item(), pred_disp.size(0))
+        metric_dict['thres2'].update(thres2.item(), pred_disp.size(0))
+        metric_dict['thres3'].update(thres3.item(), pred_disp.size(0))
 
     def get_metric_vals(self, metric_dict, return_dict=False):
         if return_dict:
@@ -233,20 +234,26 @@ class RunManager:
         with torch.no_grad():
             with tqdm(total=len(data_loader),
                       desc='Validate Epoch #{} {}'.format(epoch + 1, run_str), disable=no_logs) as t:
-                for i, (images, labels) in enumerate(data_loader):
-                    images, labels = images.to(self.device), labels.to(self.device)
-                    # compute output
-                    output = net(images)
-                    loss = self.test_criterion(output, labels)
-                    # measure accuracy and record loss
-                    self.update_metric(metric_dict, output, labels)
+                for i, sample in enumerate(data_loader):
+                    left = sample['left'].to(self.device)  # [B, 3, H, W]
+                    right = sample['right'].to(self.device)
+                    gt_disp = sample['disp'].to(self.device)  # [B, H, W]
 
-                    losses.update(loss.item(), images.size(0))
-                    t.set_postfix({
-                        'loss': losses.avg,
-                        **self.get_metric_vals(metric_dict, return_dict=True),
-                        'img_size': images.size(2),
-                    })
+                    # compute output
+                    pred_disp_pyramid = self.net(left, right)  # list of H/12, H/6, H/3, H/2, H
+                    pred_disp = pred_disp_pyramid[-1]
+                    mask = (gt_disp > 0) & (gt_disp < 192)
+
+                    loss = self.test_criterion(pred_disp_pyramid, gt_disp, mask)
+                    # measure accuracy and record loss
+                    if not loss is None:
+                        losses.update(loss, left.size(0))
+                        self.update_metric(metric_dict, pred_disp, gt_disp, mask)
+                        t.set_postfix({
+                            'loss': losses.avg.item(),
+                            **self.get_metric_vals(metric_dict, return_dict=True),
+                            'img_size': left.size(2),
+                        })
                     t.update(1)
         return losses.avg, self.get_metric_vals(metric_dict)
 
@@ -371,8 +378,8 @@ class RunManager:
                 'state_dict': self.network.state_dict(),
             }, is_best=is_best)
 
-    def reset_running_statistics(self, net=None, subset_size=2000, subset_batch_size=200, data_loader=None):
-        from ofa.imagenet_classification.elastic_nn.utils import set_running_statistics
+    def reset_running_statistics(self, net=None, subset_size=200, subset_batch_size=20, data_loader=None):
+        from ofa.stereo_matching.elastic_nn.utils import set_running_statistics
         if net is None:
             net = self.network
         if data_loader is None:

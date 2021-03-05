@@ -15,7 +15,7 @@ from ofa.stereo_matching.elastic_nn.networks import OFAAANet
 from ofa.stereo_matching.run_manager import DistributedStereoRunConfig
 from ofa.stereo_matching.run_manager.distributed_run_manager import DistributedRunManager
 from ofa.utils import download_url, MyRandomResizedCrop
-from ofa.imagenet_classification.elastic_nn.training.progressive_shrinking import load_models
+from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import load_models
 
 
 parser = argparse.ArgumentParser()
@@ -77,8 +77,8 @@ elif args.task == 'expand':
         args.expand_list = '4,6'
         args.depth_list = '2,3,4'
     else:
-        args.n_epochs = 120
-        args.base_lr = 7.5e-3
+        args.n_epochs = 25
+        args.base_lr = 7.5e-4
         args.warmup_epochs = 5
         args.warmup_lr = -1
         args.ks_list = '3,5,7'
@@ -91,7 +91,7 @@ args.manual_seed = 0
 #args.lr_schedule_type = 'cosine'
 args.lr_schedule_type = 'multistep-10-0.5'
 
-args.base_batch_size = 4
+args.base_batch_size = 2
 args.valid_size = None
 
 args.opt_type = 'adam'
