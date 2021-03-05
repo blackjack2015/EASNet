@@ -23,12 +23,10 @@ class OFAAANet(AANet):
         self.ks_list = val2list(ks_list, 1)
         self.expand_ratio_list = val2list(expand_ratio_list, 1)
         self.depth_list = val2list(depth_list, 1)
-        self.scale_list = val2list(scale_list, 1)
 
         self.ks_list.sort()
         self.expand_ratio_list.sort()
         self.depth_list.sort()
-        self.scale_list.sort()
         self.feature_blocks = self.ConstructFeatureNet()
 
         super(OFAAANet, self).__init__(max_disp = 192, feature_blocks = self.feature_blocks)
@@ -37,14 +35,12 @@ class OFAAANet(AANet):
         self.runtime_depth = [len(block_idx) for block_idx in self.fea_block_group_info]
 
     def ConstructFeatureNet(self):
-        #base_stage_width = [32, 64, 128]
-        base_stage_width = [16 for _ in range(max(self.scale_list))]
+        base_stage_width = [32, 64, 128]
 
-        stride_stages = [3] + [2 for _ in range(max(self.scale_list)-1)]
-        act_stages = ['relu' for _ in range(max(self.scale_list))]
-        #se_stages = [False, True, False]
-        se_stages = [False for _ in range(max(self.scale_list))]
-        n_block_list = [max(self.depth_list)] * max(self.scale_list)
+        stride_stages = [3, 2, 2]
+        act_stages = ['relu', 'relu', 'relu']
+        se_stages = [False, True, False]
+        n_block_list = [max(self.depth_list)] * 3
         width_list = []
         for base_width in base_stage_width:
             width = make_divisible(base_width * self.width_mult, MyNetwork.CHANNEL_DIVISIBLE)
@@ -160,9 +156,9 @@ class OFAAANet(AANet):
     """ set, sample and get active sub-networks """
 
     def set_max_net(self):
-        self.set_active_subnet(ks=max(self.ks_list), e=max(self.expand_ratio_list), d=max(self.depth_list), s=max(self.scale_list))
+        self.set_active_subnet(ks=max(self.ks_list), e=max(self.expand_ratio_list), d=max(self.depth_list))
 
-    def set_active_subnet(self, ks=None, e=None, d=None, s=None, **kwargs):
+    def set_active_subnet(self, ks=None, e=None, d=None, **kwargs):
         ks = val2list(ks, len(self.feature_blocks))
         expand_ratio = val2list(e, len(self.feature_blocks))
         depth = val2list(d, len(self.fea_block_group_info))

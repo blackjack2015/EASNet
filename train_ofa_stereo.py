@@ -36,6 +36,7 @@ if args.task == 'large':
     args.ks_list = '7'
     args.expand_list = '6'
     args.depth_list = '4'
+    args.scale_list = '5'
 elif args.task == 'kernel':
     args.path = 'exp/normal2kernel'
     args.dynamic_batch_size = 1
@@ -178,12 +179,13 @@ if __name__ == '__main__':
     args.ks_list = [int(ks) for ks in args.ks_list.split(',')]
     args.expand_list = [int(e) for e in args.expand_list.split(',')]
     args.depth_list = [int(d) for d in args.depth_list.split(',')]
+    args.scale_list = [int(d) for d in args.scale_list.split(',')]
 
     args.width_mult_list = args.width_mult_list[0] if len(args.width_mult_list) == 1 else args.width_mult_list
     net = OFAAANet(
         bn_param=(args.bn_momentum, args.bn_eps),
         base_stage_width=args.base_stage_width, width_mult=args.width_mult_list,
-        ks_list=args.ks_list, expand_ratio_list=args.expand_list, depth_list=args.depth_list
+        ks_list=args.ks_list, expand_ratio_list=args.expand_list, depth_list=args.depth_list, scale_list=args.scale_list
     )
 
     """ Distributed RunManager """
@@ -204,7 +206,8 @@ if __name__ == '__main__':
     validate_func_dict = {'image_size_list': {224},
                           'ks_list': sorted({min(args.ks_list), max(args.ks_list)}),
                           'expand_ratio_list': sorted({min(args.expand_list), max(args.expand_list)}),
-                          'depth_list': sorted({min(net.depth_list), max(net.depth_list)})}
+                          'depth_list': sorted({min(net.depth_list), max(net.depth_list)}),
+                          'scale_list': sorted({min(net.scale_list), max(net.scale_list)})}
     if args.task == 'large':
         train(distributed_run_manager, args,
               lambda _run_manager, epoch, is_test: validate(_run_manager, epoch, is_test, **validate_func_dict))
