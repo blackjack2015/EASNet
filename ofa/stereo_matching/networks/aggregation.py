@@ -324,6 +324,7 @@ class AdaptiveAggregationModule(nn.Module):
         self.num_blocks = num_blocks
 
         self.branches = nn.ModuleList()
+        self.active_scale = self.num_scales
 
         # Adaptive intra-scale aggregation
         for i in range(self.num_scales):
@@ -372,21 +373,36 @@ class AdaptiveAggregationModule(nn.Module):
 
         self.relu = nn.LeakyReLU(0.2, inplace=True)
 
-    def forward(self, x):
-        assert len(self.branches) == len(x)
+    def set_active_scale(self, scale):
+        assert scale <= self.num_scales
+        self.active_scale = scale
 
-        for i in range(len(self.branches)):
-            branch = self.branches[i]
-            for j in range(self.num_blocks):
-                dconv = branch[j]
-                x[i] = dconv(x[i])
+    def clip_scale(self, num_scales):
+        self.branches = self.branches[:num_scales]
+        self.fuse_layers = self.fuse_layers[:num_scales]
+        for i in range(len(self.fuse_layers)):
+            self.fuse_layers[i] = self.fuse_layers[i][:num_scales]
+
+    def forward(self, x):
+        #assert len(self.branches) == len(x)
+        # revise it to support dynamic branching
+        assert self.active_scale <= len(x)
+
+        #for i in range(len(self.branches)):
+        for i in range(self.active_scale):
+                branch = self.branches[i]
+                for j in range(self.num_blocks):
+                    dconv = branch[j]
+                    x[i] = dconv(x[i])
 
         if self.num_scales == 1:  # without fusions
             return x
 
         x_fused = []
-        for i in range(len(self.fuse_layers)):
-            for j in range(len(self.branches)):
+        #for i in range(len(self.fuse_layers)):
+        #    for j in range(len(self.branches)):
+        for i in range(self.active_scale):
+            for j in range(self.active_scale):
                 if j == 0:
                     x_fused.append(self.fuse_layers[i][0](x[0]))
                 else:
@@ -416,6 +432,7 @@ class AdaptiveAggregation(nn.Module):
         self.num_scales = num_scales
         self.num_fusions = num_fusions
         self.intermediate_supervision = intermediate_supervision
+        self.active_scale = self.num_scales
 
         fusions = nn.ModuleList()
         for i in range(num_fusions):
@@ -448,16 +465,26 @@ class AdaptiveAggregation(nn.Module):
             if not self.intermediate_supervision:
                 break
 
+    def set_active_scale(self, scale):
+        assert scale <= self.num_scales
+        self.active_scale = scale
+
+    def clip_scale(self, num_scales):
+        for fusion in self.fusions:
+            fusion.clip_scale(num_scales)
+
     def forward(self, cost_volume):
         assert isinstance(cost_volume, list)
 
         for i in range(self.num_fusions):
             fusion = self.fusions[i]
+            fusion.set_active_scale(self.active_scale)
             cost_volume = fusion(cost_volume)
 
         # Make sure the final output is in the first position
         out = []  # 1/3, 1/6, 1/12
-        for i in range(len(self.final_conv)):
+        #for i in range(len(self.final_conv)):
+        for i in range(self.active_scale):
             out = out + [self.final_conv[i](cost_volume[i])]
 
         return out

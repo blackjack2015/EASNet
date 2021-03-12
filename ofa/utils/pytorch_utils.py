@@ -71,7 +71,11 @@ def aanet_loss(pred_disp_pyramid, gt_disp, mask):
     pseudo_pyramid_loss = []
 
     # Loss weights
-    if len(pred_disp_pyramid) == 5:
+    if len(pred_disp_pyramid) == 7:
+        pyramid_weight = [1 / 3, 2 / 3, 1.0, 1.0, 1.0, 1.0, 1.0]  # OFA-AANet
+    elif len(pred_disp_pyramid) == 6: # 4-scale feature pyramid
+        pyramid_weight = [1 / 3, 2 / 3, 1.0, 1.0, 1.0, 1.0]  # OFA-AANet
+    elif len(pred_disp_pyramid) == 5:
         pyramid_weight = [1 / 3, 2 / 3, 1.0, 1.0, 1.0]  # AANet and AANet+
     elif len(pred_disp_pyramid) == 4:
         pyramid_weight = [1 / 3, 2 / 3, 1.0, 1.0]

@@ -242,6 +242,7 @@ class DistributedRunManager:
                       desc='Validate Epoch #{} {}'.format(epoch + 1, run_str),
                       disable=no_logs or not self.is_root) as t:
                 for i, sample in enumerate(data_loader):
+
                     left = sample['left'].cuda()  # [B, 3, H, W]
                     right = sample['right'].cuda()
                     gt_disp = sample['disp'].cuda()  # [B, H, W]
@@ -253,13 +254,14 @@ class DistributedRunManager:
 
                     loss = self.test_criterion(pred_disp_pyramid, gt_disp, mask)
                     # measure accuracy and record loss
-                    losses.update(loss, left.size(0))
-                    self.update_metric(metric_dict, pred_disp, gt_disp, mask)
-                    t.set_postfix({
-                        'loss': losses.avg.item(),
-                        **self.get_metric_vals(metric_dict, return_dict=True),
-                        'img_size': left.size(2),
-                    })
+                    if not loss is None:
+                        losses.update(loss, left.size(0))
+                        self.update_metric(metric_dict, pred_disp, gt_disp, mask)
+                        t.set_postfix({
+                            'loss': losses.avg.item(),
+                            **self.get_metric_vals(metric_dict, return_dict=True),
+                            'img_size': left.size(2),
+                        })
                     t.update(1)
         return losses.avg.item(), self.get_metric_vals(metric_dict)
 

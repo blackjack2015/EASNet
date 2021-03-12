@@ -20,7 +20,7 @@ from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import load_m
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--task', type=str, default='large', choices=[
-    'kernel', 'depth', 'expand', 'large'
+    'kernel', 'depth', 'expand', 'scale', 'large'
 ])
 parser.add_argument('--phase', type=int, default=1, choices=[1, 2])
 parser.add_argument('--resume', action='store_true')
@@ -34,9 +34,9 @@ if args.task == 'large':
     args.warmup_epochs = 0
     args.warmup_lr = -1
     args.ks_list = '7'
-    args.expand_list = '6'
+    args.expand_list = '8'
     args.depth_list = '4'
-    args.scale_list = '5'
+    args.scale_list = '4'
 elif args.task == 'kernel':
     args.path = 'exp/normal2kernel'
     args.dynamic_batch_size = 1
@@ -58,7 +58,7 @@ elif args.task == 'depth':
         args.ks_list = '3,5,7'
         args.expand_list = '6'
         args.depth_list = '3,4'
-    else:
+    elif args.phase == 2:
         args.n_epochs = 120
         args.base_lr = 7.5e-3
         args.warmup_epochs = 5
@@ -66,6 +66,14 @@ elif args.task == 'depth':
         args.ks_list = '3,5,7'
         args.expand_list = '6'
         args.depth_list = '2,3,4'
+    else:
+        args.n_epochs = 120
+        args.base_lr = 7.5e-3
+        args.warmup_epochs = 5
+        args.warmup_lr = -1
+        args.ks_list = '3,5,7'
+        args.expand_list = '6'
+        args.depth_list = '1,2,3,4'
 elif args.task == 'expand':
     args.path = 'exp/kernel_depth2kernel_depth_width/phase%d' % args.phase
     args.dynamic_batch_size = 4
@@ -75,9 +83,10 @@ elif args.task == 'expand':
         args.warmup_epochs = 0
         args.warmup_lr = -1
         args.ks_list = '3,5,7'
-        args.expand_list = '4,6'
+        args.expand_list = '3,4,6'
         args.depth_list = '2,3,4'
-    else:
+        args.scale_list = '4'
+    elif args.phase == 2:
         args.n_epochs = 25
         args.base_lr = 7.5e-4
         args.warmup_epochs = 5
@@ -85,6 +94,37 @@ elif args.task == 'expand':
         args.ks_list = '3,5,7'
         args.expand_list = '3,4,6'
         args.depth_list = '2,3,4'
+        args.scale_list = '4'
+    else:
+        args.n_epochs = 25
+        args.base_lr = 7.5e-4
+        args.warmup_epochs = 5
+        args.warmup_lr = -1
+        args.ks_list = '3,5,7'
+        args.expand_list = '2,3,4,6'
+        args.depth_list = '1,2,3,4'
+        args.scale_list = '4'
+elif args.task == 'scale':
+    args.path = 'exp/kernel_depth_width2kernel_depth_width_scale/phase%d' % args.phase
+    args.dynamic_batch_size = 4
+    if args.phase == 1:
+        args.n_epochs = 25
+        args.base_lr = 2.5e-3
+        args.warmup_epochs = 0
+        args.warmup_lr = -1
+        args.ks_list = '3,5,7'
+        args.expand_list = '3,4,6'
+        args.depth_list = '2,3,4'
+        args.scale_list = '4'
+    else:
+        args.n_epochs = 25
+        args.base_lr = 2.5e-3
+        args.warmup_epochs = 5
+        args.warmup_lr = -1
+        args.ks_list = '3,5,7'
+        args.expand_list = '3,4,6'
+        args.depth_list = '2,3,4'
+        args.scale_list = '2,3,4'
 else:
     raise NotImplementedError
 args.manual_seed = 0
@@ -92,7 +132,7 @@ args.manual_seed = 0
 #args.lr_schedule_type = 'cosine'
 args.lr_schedule_type = 'multistep-10-0.5'
 
-args.base_batch_size = 2
+args.base_batch_size = 1
 args.valid_size = None
 
 args.opt_type = 'adam'
@@ -197,12 +237,11 @@ if __name__ == '__main__':
     distributed_run_manager.save_config()
     # hvd broadcast
     distributed_run_manager.broadcast()
-    print('Finish broadcasting.')
+    #print('Finish broadcasting.')
 
     # training
     from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import validate, train
 
-    #validate_func_dict = {'image_size_list': {224} if isinstance(args.image_size, int) else sorted({160, 224}),
     validate_func_dict = {'image_size_list': {224},
                           'ks_list': sorted({min(args.ks_list), max(args.ks_list)}),
                           'expand_ratio_list': sorted({min(args.expand_list), max(args.expand_list)}),
@@ -250,13 +289,29 @@ if __name__ == '__main__':
             #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E6_K357',
             #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
             #)
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E6_K7'
+            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E6_K7_S4'
         else:
             #args.ofa_checkpoint_path = download_url(
             #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E46_K357',
             #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
             #)
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E6_K7'
+            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E6_K7_S4'
         train_elastic_expand(train, distributed_run_manager, args, validate_func_dict)
+    elif args.task == 'scale':
+        from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import train_elastic_scale
+        if args.phase == 1:
+            #args.ofa_checkpoint_path = download_url(
+            #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E6_K357',
+            #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
+            #)
+            #args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E6_K7_S4'
+            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E346_K357_S4'
+        else:
+            #args.ofa_checkpoint_path = download_url(
+            #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E46_K357',
+            #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
+            #)
+            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E346_K357_S4'
+        train_elastic_scale(train, distributed_run_manager, args, validate_func_dict)
     else:
         raise NotImplementedError

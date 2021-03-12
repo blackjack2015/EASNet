@@ -20,7 +20,7 @@ __all__ = [
 
 
 def validate(run_manager, epoch=0, is_test=False, image_size_list=None,
-             ks_list=None, expand_ratio_list=None, depth_list=None, width_mult_list=None, additional_setting=None):
+             ks_list=None, expand_ratio_list=None, depth_list=None, scale_list=None, width_mult_list=None, additional_setting=None):
     dynamic_net = run_manager.net
     if isinstance(dynamic_net, nn.DataParallel):
         dynamic_net = dynamic_net.module
@@ -35,6 +35,8 @@ def validate(run_manager, epoch=0, is_test=False, image_size_list=None,
         expand_ratio_list = dynamic_net.expand_ratio_list
     if depth_list is None:
         depth_list = dynamic_net.depth_list
+    if scale_list is None:
+        scale_list = dynamic_net.scale_list
     if width_mult_list is None:
         if 'width_mult_list' in dynamic_net.__dict__:
             width_mult_list = list(range(len(dynamic_net.width_mult_list)))
@@ -45,22 +47,24 @@ def validate(run_manager, epoch=0, is_test=False, image_size_list=None,
     for d in depth_list:
         for e in expand_ratio_list:
             for k in ks_list:
-                for w in width_mult_list:
-                    for img_size in image_size_list:
-                        subnet_settings.append([{
-                            'image_size': img_size,
-                            'd': d,
-                            'e': e,
-                            'ks': k,
-                            'w': w,
-                        }, 'R%s-D%s-E%s-K%s-W%s' % (img_size, d, e, k, w)])
+                for s in scale_list:
+                    for w in width_mult_list:
+                        for img_size in image_size_list:
+                            subnet_settings.append([{
+                                'image_size': img_size,
+                                'd': d,
+                                'e': e,
+                                'ks': k,
+                                's': s,
+                                'w': w,
+                            }, 'R%s-D%s-E%s-K%s-S%s-W%s' % (img_size, d, e, k, s, w)])
     if additional_setting is not None:
         subnet_settings += additional_setting
 
     losses_of_subnets, epe_of_subnets, d1_of_subnets, thres1_of_subnets, thres2_of_subnets, thres3_of_subnets = [], [], [], [], [], []
 
     valid_log = ''
-    print(subnet_settings)
+    #print(subnet_settings)
     for setting, name in subnet_settings:
         run_manager.write_log('-' * 30 + ' Validate %s ' % name + '-' * 30, 'train', should_print=False)
         #run_manager.run_config.data_provider.assign_active_img_size(setting.pop('image_size'))
@@ -178,6 +182,19 @@ def train(run_manager, args, validate_func=None):
     if validate_func is None:
         validate_func = validate
 
+    # validate the pre-loaded model
+    val_loss, val_epe, val_d1, _val_log = validate_func(run_manager, epoch=-1, is_test=False)
+    # best_acc
+    is_best = val_epe < run_manager.best_epe
+    run_manager.best_epe = min(run_manager.best_epe, val_epe)
+    if not distributed or run_manager.is_root:
+        val_log = 'Valid [{0}/{1}] loss={2:.3f}, epe={3:.3f} ({4:.3f})'. \
+            format(epoch + 1 - args.warmup_epochs, run_manager.run_config.n_epochs, val_loss, val_epe,
+                   run_manager.best_epe)
+        val_log += ', Train epe {epe:.3f}, Train loss {loss:.3f}\t'.format(epe=train_epe, loss=train_loss)
+        val_log += _val_log
+        run_manager.write_log(val_log, 'valid', should_print=False)
+
     for epoch in range(run_manager.start_epoch, run_manager.run_config.n_epochs + args.warmup_epochs):
         train_loss, (train_epe, train_d1, thres1, thres2, thres3) = train_one_epoch(
             run_manager, args, epoch, args.warmup_epochs, args.warmup_lr)
@@ -284,6 +301,42 @@ def train_elastic_expand(train_func, run_manager, args, validate_func_dict):
         lambda _run_manager, epoch, is_test: validate(_run_manager, epoch, is_test, **validate_func_dict)
     )
 
+def train_elastic_scale(train_func, run_manager, args, validate_func_dict):
+    dynamic_net = run_manager.net
+    if isinstance(dynamic_net, nn.DataParallel):
+        dynamic_net = dynamic_net.module
+
+    scale_stage_list = dynamic_net.scale_list.copy()
+    scale_stage_list.sort(reverse=True)
+    n_stages = len(scale_stage_list) - 1
+    current_stage = n_stages - 1
+
+    # load pretrained models
+    if run_manager.start_epoch == 0 and not args.resume:
+        validate_func_dict['scale_list'] = sorted(dynamic_net.scale_list)
+
+        load_models(run_manager, dynamic_net, model_path=args.ofa_checkpoint_path)
+        #dynamic_net.re_organize_middle_weights(expand_ratio_stage=current_stage)
+        #run_manager.write_log('%.3f\t%.3f\t%.3f\t%s' %
+        #                      validate(run_manager, is_test=True, **validate_func_dict), 'valid')
+    else:
+        assert args.resume
+
+    run_manager.write_log(
+        '-' * 30 + 'Supporting Elastic Scale: %s -> %s' %
+        (scale_stage_list[:current_stage + 1], scale_stage_list[:current_stage + 2]) + '-' * 30, 'valid'
+    )
+    if len(set(dynamic_net.ks_list)) == 1 and len(set(dynamic_net.depth_list)) == 1 and len(set(dynamic_net.expand_ratio_list)) == 1:
+        validate_func_dict['scale_list'] = scale_stage_list
+    else:
+        validate_func_dict['scale_list'] = sorted({min(scale_stage_list), max(scale_stage_list)})
+
+    # train
+    train_func(
+        run_manager, args,
+        lambda _run_manager, epoch, is_test: validate(_run_manager, epoch, is_test, **validate_func_dict)
+    )
+
 
 def train_elastic_width_mult(train_func, run_manager, args, validate_func_dict):
     dynamic_net = run_manager.net
@@ -316,6 +369,7 @@ def train_elastic_width_mult(train_func, run_manager, args, validate_func_dict):
         (width_stage_list[:current_stage + 1], width_stage_list[:current_stage + 2]) + '-' * 30, 'valid'
     )
     validate_func_dict['width_mult_list'] = sorted({0, len(width_stage_list) - 1})
+
 
     # train
     train_func(

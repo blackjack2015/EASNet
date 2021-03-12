@@ -39,6 +39,7 @@ class AANet(MyNetwork):
         self.num_downsample = num_downsample
         self.aggregation_type = aggregation_type
         self.num_scales = num_scales
+        self.active_scale = self.num_scales
 
         # Feature extractor
         if feature_type == 'stereonet':
@@ -137,6 +138,9 @@ class AANet(MyNetwork):
             else:
                 raise NotImplementedError
 
+    def clip_scale(self, num_scales):
+        self.aggregation.clip_scale(num_scales)
+
     def feature_extraction(self, img):
         # blocks
         features = None
@@ -227,6 +231,7 @@ class AANet(MyNetwork):
         left_feature = self.feature_extraction(left_img)
         right_feature = self.feature_extraction(right_img)
         cost_volume = self.cost_volume_construction(left_feature, right_feature)
+        self.aggregation.set_active_scale(self.active_scale)
         aggregation = self.aggregation(cost_volume)
         disparity_pyramid = self.disparity_computation(aggregation)
         disparity_pyramid += self.disparity_refinement(left_img, right_img,

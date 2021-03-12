@@ -25,6 +25,8 @@ class OFAAANet(AANet):
         self.depth_list = val2list(depth_list, 1)
         self.scale_list = val2list(scale_list, 1)
         self.active_scale = max(self.scale_list)
+        self.max_scale = max(self.scale_list)
+        self.active_scale = self.max_scale
 
         self.ks_list.sort()
         self.expand_ratio_list.sort()
@@ -40,11 +42,13 @@ class OFAAANet(AANet):
     def ConstructFeatureNet(self):
 
         base_stage_width = [16*(2**i) for i in range(max(self.scale_list))]
+        #base_stage_width = [32*(2**i) for i in range(max(self.scale_list))]
 
         stride_stages = [3] + [2 for _ in range(max(self.scale_list)-1)]
         act_stages = ['relu' for _ in range(max(self.scale_list))]
         #se_stages = [False, True, False]
-        se_stages = [False for _ in range(max(self.scale_list))]
+        #se_stages = [False for _ in range(max(self.scale_list))]
+        se_stages = [False if i%2==0 else True for i in range(self.max_scale)]
         n_block_list = [max(self.depth_list)] * max(self.scale_list)
         width_list = []
         for base_width in base_stage_width:
@@ -189,6 +193,8 @@ class OFAAANet(AANet):
             self.__dict__['_expand_include_list'] = include_list.copy()
         elif constraint_type == 'kernel_size':
             self.__dict__['_ks_include_list'] = include_list.copy()
+        elif constraint_type == 'scale':
+            self.__dict__['_scale_include_list'] = include_list.copy()
         else:
             raise NotImplementedError
 
@@ -196,6 +202,7 @@ class OFAAANet(AANet):
         self.__dict__['_depth_include_list'] = None
         self.__dict__['_expand_include_list'] = None
         self.__dict__['_ks_include_list'] = None
+        self.__dict__['_scale_include_list'] = None
 
     def sample_active_subnet(self):
         ks_candidates = self.ks_list if self.__dict__.get('_ks_include_list', None) is None \
@@ -204,6 +211,8 @@ class OFAAANet(AANet):
             else self.__dict__['_expand_include_list']
         depth_candidates = self.depth_list if self.__dict__.get('_depth_include_list', None) is None else \
             self.__dict__['_depth_include_list']
+        scale_candidates = self.scale_list if self.__dict__.get('_scale_include_list', None) is None else \
+            self.__dict__['_scale_include_list']
 
         # sample kernel size
         ks_setting = []
@@ -229,12 +238,17 @@ class OFAAANet(AANet):
             d = random.choice(d_set)
             depth_setting.append(d)
 
-        self.set_active_subnet(ks_setting, expand_setting, depth_setting)
+        # sample scale
+        scale_setting = self.max_scale
+        scale_setting = random.choice(self.scale_list)
+
+        self.set_active_subnet(ks_setting, expand_setting, depth_setting, scale_setting)
 
         return {
             'ks': ks_setting,
             'e': expand_setting,
             'd': depth_setting,
+            's': scale_setting
         }
 
     def get_active_subnet(self, preserve_weight=True):
@@ -244,22 +258,24 @@ class OFAAANet(AANet):
         input_channel = 3
         # blocks
         for stage_id, block_idx in enumerate(self.fea_block_group_info):
-            depth = self.runtime_depth[stage_id]
-            active_idx = block_idx[:depth]
-            stage_blocks = []
-            for idx in active_idx:
-                stage_blocks.append(ResidualBlock(
-                    self.feature_blocks[idx].conv.get_active_subnet(input_channel, preserve_weight),
-                    copy.deepcopy(self.feature_blocks[idx].shortcut)
-                ))
-                input_channel = stage_blocks[-1].conv.out_channels
-            blocks += stage_blocks
+            if stage_id < self.active_scale:
+                depth = self.runtime_depth[stage_id]
+                active_idx = block_idx[:depth]
+                stage_blocks = []
+                for idx in active_idx:
+                    stage_blocks.append(ResidualBlock(
+                        self.feature_blocks[idx].conv.get_active_subnet(input_channel, preserve_weight),
+                        copy.deepcopy(self.feature_blocks[idx].shortcut)
+                    ))
+                    input_channel = stage_blocks[-1].conv.out_channels
+                blocks += stage_blocks
 
-        _subnet = AANet(max_disp = 192, feature_blocks = blocks)
+        _subnet = AANet(max_disp = 192, feature_blocks = blocks, num_scales=self.active_scale)
 
         # make deep copy of other modules
         _subnet.cost_volume = copy.deepcopy(self.cost_volume)
         _subnet.aggregation = copy.deepcopy(self.aggregation)
+        _subnet.clip_scale(self.active_scale)
         _subnet.disparity_estimation = copy.deepcopy(self.disparity_estimation)
         _subnet.refinement = copy.deepcopy(self.refinement)
 
