@@ -19,7 +19,7 @@ __all__ = ['StereoDataProvider']
 
 
 class StereoDataProvider(DataProvider):
-    DEFAULT_PATH = '/home/datasets/SceneFlow'
+    DEFAULT_PATH = '/datasets/SceneFlow'
 
     def __init__(self, save_path=None, train_batch_size=16, test_batch_size=32, valid_size=None, n_worker=8,
                  dataset_name='SceneFlow',load_pseudo_gt=False,

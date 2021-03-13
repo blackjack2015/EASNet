@@ -41,7 +41,7 @@ class OFAAANet(AANet):
 
     def ConstructFeatureNet(self):
 
-        base_stage_width = [16*(2**i) for i in range(max(self.scale_list))]
+        base_stage_width = [24] + [16*(2**i) for i in range(1, max(self.scale_list))]
         #base_stage_width = [32*(2**i) for i in range(max(self.scale_list))]
 
         stride_stages = [3] + [2 for _ in range(max(self.scale_list)-1)]

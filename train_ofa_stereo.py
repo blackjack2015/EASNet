@@ -122,7 +122,7 @@ elif args.task == 'scale':
         args.warmup_epochs = 5
         args.warmup_lr = -1
         args.ks_list = '3,5,7'
-        args.expand_list = '3,4,6'
+        args.expand_list = '2,3,4,6'
         args.depth_list = '2,3,4'
         args.scale_list = '2,3,4'
 else:
@@ -132,7 +132,7 @@ args.manual_seed = 0
 #args.lr_schedule_type = 'cosine'
 args.lr_schedule_type = 'multistep-10-0.5'
 
-args.base_batch_size = 1
+args.base_batch_size = 2
 args.valid_size = None
 
 args.opt_type = 'adam'
@@ -311,7 +311,7 @@ if __name__ == '__main__':
             #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E46_K357',
             #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
             #)
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E346_K357_S4'
+            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E346_K357_S234'
         train_elastic_scale(train, distributed_run_manager, args, validate_func_dict)
     else:
         raise NotImplementedError

@@ -182,18 +182,18 @@ def train(run_manager, args, validate_func=None):
     if validate_func is None:
         validate_func = validate
 
-    # validate the pre-loaded model
-    val_loss, val_epe, val_d1, _val_log = validate_func(run_manager, epoch=-1, is_test=False)
-    # best_acc
-    is_best = val_epe < run_manager.best_epe
-    run_manager.best_epe = min(run_manager.best_epe, val_epe)
-    if not distributed or run_manager.is_root:
-        val_log = 'Valid [{0}/{1}] loss={2:.3f}, epe={3:.3f} ({4:.3f})'. \
-            format(epoch + 1 - args.warmup_epochs, run_manager.run_config.n_epochs, val_loss, val_epe,
-                   run_manager.best_epe)
-        val_log += ', Train epe {epe:.3f}, Train loss {loss:.3f}\t'.format(epe=train_epe, loss=train_loss)
-        val_log += _val_log
-        run_manager.write_log(val_log, 'valid', should_print=False)
+    ## validate the pre-loaded model
+    #val_loss, val_epe, val_d1, _val_log = validate_func(run_manager, epoch=-1, is_test=False)
+    ## best_acc
+    #is_best = val_epe < run_manager.best_epe
+    #run_manager.best_epe = min(run_manager.best_epe, val_epe)
+    #if not distributed or run_manager.is_root:
+    #    val_log = 'Valid [{0}/{1}] loss={2:.3f}, epe={3:.3f} ({4:.3f})'. \
+    #        format(epoch + 1 - args.warmup_epochs, run_manager.run_config.n_epochs, val_loss, val_epe,
+    #               run_manager.best_epe)
+    #    val_log += ', Train epe {epe:.3f}, Train loss {loss:.3f}\t'.format(epe=train_epe, loss=train_loss)
+    #    val_log += _val_log
+    #    run_manager.write_log(val_log, 'valid', should_print=False)
 
     for epoch in range(run_manager.start_epoch, run_manager.run_config.n_epochs + args.warmup_epochs):
         train_loss, (train_epe, train_d1, thres1, thres2, thres3) = train_one_epoch(

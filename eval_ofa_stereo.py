@@ -55,10 +55,10 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 args.batch_size = args.batch_size * max(len(device_list), 1)
 StereoDataProvider.DEFAULT_PATH = args.path
 
-ofa_network = OFAAANet(ks_list=[3,5,7], expand_ratio_list=[4,5,6], depth_list=[2,3,4], scale_list=[2,3,4])
+ofa_network = OFAAANet(ks_list=[3,5,7], expand_ratio_list=[4,5,6,8], depth_list=[2,3,4], scale_list=[2,3,4])
 run_config = StereoRunConfig(test_batch_size=args.batch_size, n_worker=args.workers)
 
-model_file = 'ofa_stereo_checkpoints/ofa_stereo_D234_E346_K357_S234'
+model_file = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K7_S4'
 init = torch.load(model_file, map_location='cpu')
 model_dict = init['state_dict']
 ofa_network.load_state_dict(model_dict)
@@ -69,7 +69,7 @@ ofa_network.load_state_dict(model_dict)
 """
 #ofa_network.sample_active_subnet()
 #ofa_network.set_max_net()
-ofa_network.set_active_subnet(ks=3, d=2, e=3, s=2)
+ofa_network.set_active_subnet(ks=3, d=2, e=2, s=2)
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 #subnet = ofa_network
 
