@@ -101,7 +101,8 @@ class StereoDataProvider(DataProvider):
         if self._save_path is None:
             self._save_path = self.DEFAULT_PATH
             if not os.path.exists(self._save_path):
-                self._save_path = os.path.expanduser('~/dataset/imagenet')
+                #self._save_path = os.path.expanduser('~/dataset/imagenet')
+                self._save_path = os.path.expanduser('data')
         return self._save_path
 
     @property
