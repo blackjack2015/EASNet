@@ -155,7 +155,7 @@ elif args.task == 'scale':
     #    args.scale_list = '2,3,4'
 elif args.task == 'final': # extremely small network
     #args.path = 'exp/kernel_depth_width2kernel_depth_width_scale/phase%d' % args.phase
-    args.path = 'exp/kernel_depth_width2kernel_depth_width_scale'
+    args.path = 'exp/final'
     args.dynamic_batch_size = 6
     args.n_epochs = 25
     args.base_lr = 5e-4

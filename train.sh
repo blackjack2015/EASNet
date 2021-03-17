@@ -45,4 +45,4 @@ hosts="-np 8 -H gpu5:4,gpu6:4"
 # shrink the kernel,depth,width
 $MPIPATH/bin/mpirun --oversubscribe --prefix $MPIPATH $hosts -bind-to none -map-by slot \
 	$params \
-	$PY train_ofa_stereo.py --task depth
+	$PY train_ofa_stereo.py --task expand
