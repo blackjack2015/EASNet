@@ -72,13 +72,15 @@ ofa_network.load_state_dict(model_dict)
 ofa_network.set_active_subnet(ks=3, d=2, e=2, s=2)
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 #subnet = ofa_network
+save_path = "ofa_stereo_checkpoints/aanet_D2_E2_K3_S2"
+torch.save(subnet.state_dict(), save_path)
 
 """ Test sampled subnet 
 """
 run_manager = RunManager('.tmp/eval_subnet', subnet, run_config, init=False)
 # assign image size: 128, 132, ..., 224
 #run_config.data_provider.assign_active_img_size(224)
-run_manager.reset_running_statistics(net=subnet)
+#run_manager.reset_running_statistics(net=subnet)
 
 print('Test random subnet:')
 print(subnet.module_str)
