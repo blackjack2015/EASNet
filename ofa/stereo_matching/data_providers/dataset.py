@@ -24,16 +24,10 @@ class StereoDataset(Dataset):
         self.save_filename = save_filename
         self.transform = transform
 
-        #sceneflow_finalpass_dict = {
-        #    'train': 'filenames/SceneFlow_finalpass_train.txt',
-        #    'val': 'filenames/SceneFlow_finalpass_val.txt',
-        #    'test': 'filenames/SceneFlow_finalpass_test.txt'
-        #}
-
         sceneflow_finalpass_dict = {
-            'train': 'filenames/nano_fake.list',
-            'val': 'filenames/nano_fake.list',
-            'test': 'filenames/nano_fake.list'
+            'train': 'filenames/SceneFlow_finalpass_train.txt',
+            'val': 'filenames/SceneFlow_finalpass_val.txt',
+            'test': 'filenames/SceneFlow_finalpass_test.txt'
         }
 
         kitti_2012_dict = {
