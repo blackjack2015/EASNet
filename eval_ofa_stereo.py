@@ -58,7 +58,7 @@ StereoDataProvider.DEFAULT_PATH = args.path
 ofa_network = OFAAANet(ks_list=[3,5,7], expand_ratio_list=[4,5,6,8], depth_list=[2,3,4], scale_list=[2,3,4])
 run_config = StereoRunConfig(test_batch_size=args.batch_size, n_worker=args.workers)
 
-model_file = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K7_S4'
+model_file = 'ofa_stereo_checkpoints/ofa_stereo_D234_E8_K357_S4'
 init = torch.load(model_file, map_location='cpu')
 model_dict = init['state_dict']
 ofa_network.load_state_dict(model_dict)
@@ -69,7 +69,7 @@ ofa_network.load_state_dict(model_dict)
 """
 #ofa_network.sample_active_subnet()
 #ofa_network.set_max_net()
-ofa_network.set_active_subnet(ks=3, d=2, e=2, s=2)
+ofa_network.set_active_subnet(ks=3, d=2, e=8, s=4)
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 #subnet = ofa_network
 save_path = "ofa_stereo_checkpoints/aanet_D2_E2_K3_S2"

@@ -476,7 +476,8 @@ class AdaptiveAggregation(nn.Module):
     def forward(self, cost_volume):
         assert isinstance(cost_volume, list)
 
-        for i in range(self.num_fusions):
+        #for i in range(self.num_fusions):
+        for i in range(self.active_scale):
             fusion = self.fusions[i]
             fusion.set_active_scale(self.active_scale)
             cost_volume = fusion(cost_volume)
