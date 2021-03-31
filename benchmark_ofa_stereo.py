@@ -37,7 +37,7 @@ else:
     device_list = [int(_) for _ in args.gpu.split(',')]
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-ofa_network = OFAAANet(ks_list=[3,5,7], expand_ratio_list=[4,5,6,8], depth_list=[2,3,4], scale_list=[2,3,4])
+ofa_network = OFAAANet(ks_list=[3,5,7], expand_ratio_list=[2,4,6,8], depth_list=[2,3,4], scale_list=[2,3,4])
 
 model_file = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K7_S4'
 init = torch.load(model_file, map_location='cpu')
@@ -50,10 +50,14 @@ ofa_network.load_state_dict(model_dict)
 """
 #ofa_network.sample_active_subnet()
 #ofa_network.set_max_net()
-ofa_network.set_active_subnet(ks=7, d=4, e=8, s=4)
+ks = 7
+d = 4
+e = 8
+s = 4
+ofa_network.set_active_subnet(ks=ks, d=d, e=e, s=s)
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 #subnet = ofa_network
-save_path = "ofa_stereo_checkpoints/aanet_D2_E2_K3_S4"
+save_path = "ofa_stereo_checkpoints/aanet_D%d_E%d_K%d_S%d" % (d, e, ks, s)
 torch.save(subnet.state_dict(), save_path)
 
 net = subnet
