@@ -32,7 +32,7 @@ params="--mca pml ob1 --mca btl openib,vader,self --mca btl_openib_allow_ib 1  \
 	-x NCCL_DEBUG=INFO  \
 	-x HOROVOD_CACHE_CAPACITY=0"
 #hosts="-np 4 -H gpu16:4"
-hosts="-np 8 -H gpu5:4,gpu6:4"
+hosts="-np 8 -H gpu7:4,gpu8:4"
 #hosts="-np 1 -H gpu16:1"
 #hosts="-np 16 -H gpu6:4,gpu7:4,gpu15:4,gpu16:4"
 #hosts="-np 16 -H gpu7:4,gpu11:4,gpu12:4,gpu16:4"
@@ -45,4 +45,4 @@ hosts="-np 8 -H gpu5:4,gpu6:4"
 # shrink the kernel,depth,width
 $MPIPATH/bin/mpirun --oversubscribe --prefix $MPIPATH $hosts -bind-to none -map-by slot \
 	$params \
-	$PY train_ofa_stereo.py --task expand
+	$PY train_ofa_stereo.py --task final

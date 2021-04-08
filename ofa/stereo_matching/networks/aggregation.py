@@ -390,10 +390,10 @@ class AdaptiveAggregationModule(nn.Module):
 
         #for i in range(len(self.branches)):
         for i in range(self.active_scale):
-                branch = self.branches[i]
-                for j in range(self.num_blocks):
-                    dconv = branch[j]
-                    x[i] = dconv(x[i])
+            branch = self.branches[i]
+            for j in range(self.num_blocks):
+                dconv = branch[j]
+                x[i] = dconv(x[i])
 
         if self.num_scales == 1:  # without fusions
             return x
@@ -476,8 +476,7 @@ class AdaptiveAggregation(nn.Module):
     def forward(self, cost_volume):
         assert isinstance(cost_volume, list)
 
-        #for i in range(self.num_fusions):
-        for i in range(self.active_scale):
+        for i in range(self.num_fusions):
             fusion = self.fusions[i]
             fusion.set_active_scale(self.active_scale)
             cost_volume = fusion(cost_volume)

@@ -6,6 +6,7 @@ from ofa.stereo_matching.networks.feature import BasicBlock, BasicConv, Conv2x
 from ofa.stereo_matching.networks.deform import DeformConv2d
 from ofa.stereo_matching.networks.warp import disp_warp
 
+import random
 
 def conv2d(in_channels, out_channels, kernel_size=3, stride=1, dilation=1, groups=1):
     return nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
@@ -87,20 +88,24 @@ class StereoDRNetRefinement(nn.Module):
             disp = F.interpolate(low_disp, size=left_img.size()[-2:], mode='bilinear', align_corners=False)
             disp = disp * scale_factor
 
-        # Warp right image to left view with current disparity
-        warped_right = disp_warp(right_img, disp)[0]  # [B, C, H, W]
-        error = warped_right - left_img  # [B, C, H, W]
+        ri = random.randint(0, 9)
+        #if ri % 2 == 0:
+        if scale_factor == 1.5:
+            # Warp right image to left view with current disparity
+            warped_right = disp_warp(right_img, disp)[0]  # [B, C, H, W]
+            error = warped_right - left_img  # [B, C, H, W]
 
-        concat1 = torch.cat((error, left_img), dim=1)  # [B, 6, H, W]
+            concat1 = torch.cat((error, left_img), dim=1)  # [B, 6, H, W]
 
-        conv1 = self.conv1(concat1)  # [B, 16, H, W]
-        conv2 = self.conv2(disp)  # [B, 16, H, W]
-        concat2 = torch.cat((conv1, conv2), dim=1)  # [B, 32, H, W]
+            conv1 = self.conv1(concat1)  # [B, 16, H, W]
+            conv2 = self.conv2(disp)  # [B, 16, H, W]
+            concat2 = torch.cat((conv1, conv2), dim=1)  # [B, 32, H, W]
 
-        out = self.dilated_blocks(concat2)  # [B, 32, H, W]
-        residual_disp = self.final_conv(out)  # [B, 1, H, W]
+            out = self.dilated_blocks(concat2)  # [B, 32, H, W]
+            residual_disp = self.final_conv(out)  # [B, 1, H, W]
 
-        disp = F.relu(disp + residual_disp, inplace=True)  # [B, 1, H, W]
+            disp = F.relu(disp + residual_disp, inplace=True)  # [B, 1, H, W]
+
         disp = disp.squeeze(1)  # [B, H, W]
 
         return disp

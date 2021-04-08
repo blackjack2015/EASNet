@@ -55,10 +55,11 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 args.batch_size = args.batch_size * max(len(device_list), 1)
 StereoDataProvider.DEFAULT_PATH = args.path
 
-ofa_network = OFAAANet(ks_list=[3,5,7], expand_ratio_list=[4,5,6,8], depth_list=[2,3,4], scale_list=[2,3,4])
+ofa_network = OFAAANet(ks_list=[3,5,7], expand_ratio_list=[2,4,6,8], depth_list=[2,3,4], scale_list=[2,3,4])
 run_config = StereoRunConfig(test_batch_size=args.batch_size, n_worker=args.workers)
 
-model_file = 'ofa_stereo_checkpoints/ofa_stereo_D234_E8_K357_S4'
+model_file = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K7_S4'
+#model_file = 'ofa_stereo_checkpoints/final'
 init = torch.load(model_file, map_location='cpu')
 model_dict = init['state_dict']
 ofa_network.load_state_dict(model_dict)
@@ -69,10 +70,15 @@ ofa_network.load_state_dict(model_dict)
 """
 #ofa_network.sample_active_subnet()
 #ofa_network.set_max_net()
-ofa_network.set_active_subnet(ks=3, d=2, e=8, s=4)
+#ofa_network.set_active_subnet(ks=7, d=4, e=8, s=4)
+ks = 7
+d = 4
+e = 8
+s = 4
+ofa_network.set_active_subnet(ks=ks, d=d, e=e, s=s)
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 #subnet = ofa_network
-save_path = "ofa_stereo_checkpoints/aanet_D2_E2_K3_S2"
+save_path = "ofa_stereo_checkpoints/aanet_D%d_E%d_K%d_S%d" % (d, e, ks, s)
 torch.save(subnet.state_dict(), save_path)
 
 """ Test sampled subnet 
@@ -80,7 +86,7 @@ torch.save(subnet.state_dict(), save_path)
 run_manager = RunManager('.tmp/eval_subnet', subnet, run_config, init=False)
 # assign image size: 128, 132, ..., 224
 #run_config.data_provider.assign_active_img_size(224)
-#run_manager.reset_running_statistics(net=subnet)
+run_manager.reset_running_statistics(net=subnet)
 
 print('Test random subnet:')
 print(subnet.module_str)

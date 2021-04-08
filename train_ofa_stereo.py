@@ -20,7 +20,7 @@ from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import load_m
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--task', type=str, default='large', choices=[
-    'kernel', 'depth', 'expand', 'scale', 'large'
+    'kernel', 'depth', 'expand', 'scale', 'large', 'final'
 ])
 parser.add_argument('--phase', type=int, default=1, choices=[1, 2])
 parser.add_argument('--resume', action='store_true')
@@ -158,13 +158,13 @@ elif args.task == 'final': # extremely small network
     args.path = 'exp/final'
     args.dynamic_batch_size = 6
     args.n_epochs = 25
-    args.base_lr = 5e-4
+    args.base_lr = 2.5e-4
     args.warmup_epochs = 2
     args.warmup_lr = -1
     args.ks_list = '3,5,7'
     args.expand_list = '2,4,6,8'
-    args.depth_list = '1,2,3,4'
-    args.scale_list = '1,2,3,4'
+    args.depth_list = '2,3,4'
+    args.scale_list = '2,3,4'
 else:
     raise NotImplementedError
 args.manual_seed = 0
