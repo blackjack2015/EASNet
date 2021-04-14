@@ -15,9 +15,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '-p',
     '--path',
-    help='The path of stereo dataset',
+    help='the path of stereo dataset',
     type=str,
-    default='/home/datasets/SceneFlow')
+    default='/home/datasets/sceneflow')
+parser.add_argument(
+    '-dn',
+    '--dataset',
+    help='the name of stereo dataset',
+    type=str,
+    default='SceneFlow')
 parser.add_argument(
     '-g',
     '--gpu',
@@ -56,10 +62,11 @@ args.batch_size = args.batch_size * max(len(device_list), 1)
 StereoDataProvider.DEFAULT_PATH = args.path
 
 ofa_network = OFAAANet(ks_list=[3,5,7], expand_ratio_list=[2,4,6,8], depth_list=[2,3,4], scale_list=[2,3,4])
-run_config = StereoRunConfig(test_batch_size=args.batch_size, n_worker=args.workers)
+print("Data:", args.dataset)
+run_config = StereoRunConfig(test_batch_size=args.batch_size, n_worker=args.workers, dataname=args.dataset)
 
-model_file = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K7_S4'
-#model_file = 'ofa_stereo_checkpoints/final'
+#model_file = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K7_S4'
+model_file = 'ofa_stereo_checkpoints/final'
 init = torch.load(model_file, map_location='cpu')
 model_dict = init['state_dict']
 ofa_network.load_state_dict(model_dict)
@@ -71,9 +78,9 @@ ofa_network.load_state_dict(model_dict)
 #ofa_network.sample_active_subnet()
 #ofa_network.set_max_net()
 #ofa_network.set_active_subnet(ks=7, d=4, e=8, s=4)
-ks = 7
 d = 4
 e = 8
+ks = 7
 s = 4
 ofa_network.set_active_subnet(ks=ks, d=d, e=e, s=s)
 subnet = ofa_network.get_active_subnet(preserve_weight=True)

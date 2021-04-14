@@ -22,8 +22,15 @@ def read_disp(filename, subset=False):
         if subset:
             disp = -disp
     # KITTI
-    elif filename.endswith('png'):
+    elif filename.endswith('png') and filename.split('/')[-1].startswith('0'):
         disp = _read_kitti_disp(filename)
+    # Sintel
+    elif filename.endswith('png') and filename.split('/')[-1].startswith('f'):
+        f_in = np.array(Image.open(filename))
+        d_r = f_in[:,:,0].astype('float32')
+        d_g = f_in[:,:,1].astype('float32')
+        d_b = f_in[:,:,2].astype('float32')
+        disp = d_r * 4 + d_g / (2**6) + d_b / (2**14)
     elif filename.endswith('npy'):
         disp = np.load(filename)
     else:

@@ -75,6 +75,7 @@ def profile(model, input_size, custom_ops=None):
     model.eval()
     model.apply(add_hooks)
 
+    #input_size = [input_size, input_size]
     x = [torch.zeros(input_s).unsqueeze(0).to(original_device) for input_s in input_size]
     x = tuple(x)
     with torch.no_grad():

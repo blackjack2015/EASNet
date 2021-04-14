@@ -50,10 +50,10 @@ ofa_network.load_state_dict(model_dict)
 """
 #ofa_network.sample_active_subnet()
 #ofa_network.set_max_net()
-ks = 7
-d = 4
-e = 8
-s = 4
+ks = 3
+d = 2
+e = 2
+s = 2
 ofa_network.set_active_subnet(ks=ks, d=d, e=e, s=s)
 subnet = ofa_network.get_active_subnet(preserve_weight=True)
 #subnet = ofa_network

@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from torch.utils.data import Dataset
 import os
+import numpy as np
 
 from ofa.utils import utils
 from ofa.utils.file_io import read_img, read_disp
@@ -30,6 +31,12 @@ class StereoDataset(Dataset):
             'test': 'filenames/SceneFlow_finalpass_test.txt'
         }
 
+        sintel_dict = {
+            'train': 'filenames/Sintel_ALL.txt',
+            'val': 'filenames/Sintel_ALL.txt',
+            'test': 'filenames/Sintel_ALL.txt'
+        }
+
         kitti_2012_dict = {
             'train': 'filenames/KITTI_2012_train.txt',
             'train_all': 'filenames/KITTI_2012_train_all.txt',
@@ -54,6 +61,7 @@ class StereoDataset(Dataset):
             'KITTI2012': kitti_2012_dict,
             'KITTI2015': kitti_2015_dict,
             'KITTI_mix': kitti_mix_dict,
+            'Sintel': sintel_dict,
         }
 
         assert dataset_name in dataset_name_dict.keys()
@@ -105,11 +113,22 @@ class StereoDataset(Dataset):
 
         sample['left'] = read_img(sample_path['left'])  # [H, W, 3]
         sample['right'] = read_img(sample_path['right'])
+        h, w, _ = sample['left'].shape
+        top_pad = 384-h
+        left_pad = 1296-w
+
+        if self.dataset_name in ['KITTI2012', 'KITTI2015']:
+            sample['left'] = np.lib.pad(sample['left'],((top_pad,0),(left_pad,0),(0,0)),mode='constant',constant_values=0)
+            sample['right'] = np.lib.pad(sample['right'],((top_pad,0),(left_pad,0),(0,0)),mode='constant',constant_values=0)
+
 
         # GT disparity of subset if negative, finalpass and cleanpass is positive
         subset = True if 'subset' in self.dataset_name else False
         if sample_path['disp'] is not None:
             sample['disp'] = read_disp(sample_path['disp'], subset=subset)  # [H, W]
+            if self.dataset_name in ['KITTI2012', 'KITTI2015']:
+                sample['disp'] = np.lib.pad(sample['disp'],((top_pad,0),(left_pad,0)),mode='constant',constant_values=0)
+
         if sample_path['pseudo_disp'] is not None:
             sample['pseudo_disp'] = read_disp(sample_path['pseudo_disp'], subset=subset)  # [H, W]
 

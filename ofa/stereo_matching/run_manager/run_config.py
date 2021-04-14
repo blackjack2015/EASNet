@@ -94,7 +94,7 @@ class RunConfig:
 class StereoRunConfig(RunConfig):
 
 	def __init__(self, n_epochs=150, init_lr=0.05, lr_schedule_type='cosine', lr_schedule_param=None,
-	             dataset='stereo', train_batch_size=256, test_batch_size=500, valid_size=None,
+	             dataset='stereo', dataname='SceneFlow', train_batch_size=256, test_batch_size=500, valid_size=None,
 	             opt_type='sgd', opt_param=None, weight_decay=4e-5, label_smoothing=0.1, no_decay_keys=None,
 	             mixup_alpha=None, model_init='he_fout', validation_frequency=1, print_frequency=10,
 	             n_worker=32, resize_scale=0.08, distort_color='tf', image_size=224, **kwargs):
@@ -110,6 +110,7 @@ class StereoRunConfig(RunConfig):
 		self.resize_scale = resize_scale
 		self.distort_color = distort_color
 		self.image_size = image_size
+		self.dataname = dataname
 
 	@property
 	def data_provider(self):
@@ -121,7 +122,7 @@ class StereoRunConfig(RunConfig):
 			self.__dict__['_data_provider'] = DataProviderClass(
 				train_batch_size=self.train_batch_size, test_batch_size=self.test_batch_size,
 				valid_size=self.valid_size, n_worker=self.n_worker,
-                dataset_name=self.dataset
+                dataset_name=self.dataname
 			)
 		return self.__dict__['_data_provider']
 

@@ -88,9 +88,10 @@ class StereoDRNetRefinement(nn.Module):
             disp = F.interpolate(low_disp, size=left_img.size()[-2:], mode='bilinear', align_corners=False)
             disp = disp * scale_factor
 
-        ri = random.randint(0, 9)
+        #ri = random.randint(0, 9)
         #if ri % 2 == 0:
-        if scale_factor == 1.5:
+        #if scale_factor == 1.5:
+        if True:
             # Warp right image to left view with current disparity
             warped_right = disp_warp(right_img, disp)[0]  # [B, C, H, W]
             error = warped_right - left_img  # [B, C, H, W]

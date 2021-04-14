@@ -30,10 +30,21 @@ class StereoDataProvider(DataProvider):
         self._dataset_name = dataset_name
         self._load_pseudo_gt = load_pseudo_gt
 
-        self._img_height = 540
-        self._img_width = 960
-        self._crop_height = 384
-        self._crop_width = 768
+        if dataset_name == 'SceneFlow':
+            self._img_height = 540
+            self._img_width = 960
+            self._crop_height = 384
+            self._crop_width = 768
+        if dataset_name == 'KITTI2012' or dataset_name == 'KITTI2015':
+            self._img_height = 384
+            self._img_width = 1280
+            self._crop_height = 256
+            self._crop_width = 512
+        if dataset_name == 'Sintel':
+            self._img_height = 436
+            self._img_width = 1024
+            self._crop_height = 256
+            self._crop_width = 512
 
         train_dataset = self.train_dataset(self.build_train_transform())
 
@@ -109,10 +120,13 @@ class StereoDataProvider(DataProvider):
         raise ValueError('unable to download %s' % self.name())
 
     def train_dataset(self, _transforms):
-        return StereoDataset(self.save_path, mode='train', transform=_transforms)
+        return StereoDataset(self.save_path, mode='train', dataset_name=self._dataset_name, transform=_transforms)
 
     def test_dataset(self, _transforms):
-        return StereoDataset(self.save_path, mode='test', transform=_transforms)
+        if self._dataset_name in ['KITTI2012', 'KITTI2015']:
+            return StereoDataset(self.save_path, mode='train_all', dataset_name=self._dataset_name, transform=_transforms)
+        else:
+            return StereoDataset(self.save_path, mode='test', dataset_name=self._dataset_name, transform=_transforms)
 
     @property
     def train_path(self):
