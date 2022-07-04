@@ -130,14 +130,14 @@ class StereoRunConfig(RunConfig):
 class DistributedStereoRunConfig(StereoRunConfig):
 
 	def __init__(self, n_epochs=150, init_lr=0.05, lr_schedule_type='cosine', lr_schedule_param=None,
-	             dataset='stereo', train_batch_size=64, test_batch_size=64, valid_size=None,
+	             dataset='stereo', dataname='SceneFlow', train_batch_size=64, test_batch_size=64, valid_size=None,
 	             opt_type='sgd', opt_param=None, weight_decay=4e-5, label_smoothing=0.1, no_decay_keys=None,
 	             mixup_alpha=None, model_init='he_fout', validation_frequency=1, print_frequency=10,
 	             n_worker=8, resize_scale=0.08, distort_color='tf', image_size=224,
 	             **kwargs):
 		super(DistributedStereoRunConfig, self).__init__(
 			n_epochs, init_lr, lr_schedule_type, lr_schedule_param,
-			dataset, train_batch_size, test_batch_size, valid_size,
+			dataset, dataname, train_batch_size, test_batch_size, valid_size,
 			opt_type, opt_param, weight_decay, label_smoothing, no_decay_keys,
 			mixup_alpha, model_init, validation_frequency, print_frequency, n_worker, resize_scale, distort_color,
 			image_size, **kwargs
@@ -156,6 +156,7 @@ class DistributedStereoRunConfig(StereoRunConfig):
 			self.__dict__['_data_provider'] = DataProviderClass(
 				train_batch_size=self.train_batch_size, test_batch_size=self.test_batch_size,
 				valid_size=self.valid_size, n_worker=self.n_worker,
+                dataset_name=self.dataname,
 				num_replicas=self._num_replicas, rank=self._rank,
 			)
 		return self.__dict__['_data_provider']

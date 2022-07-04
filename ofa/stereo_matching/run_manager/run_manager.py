@@ -13,6 +13,7 @@ import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
 from tqdm import tqdm
+import skimage.io
 
 from ofa.utils import get_net_info, cross_entropy_loss_with_soft_target, cross_entropy_with_label_smoothing, aanet_loss
 from ofa.utils import AverageMeter, accuracy, write_log, mix_images, mix_labels, init_models
@@ -242,8 +243,9 @@ class RunManager:
                     # compute output
                     pred_disp_pyramid = self.net(left, right)  # list of H/12, H/6, H/3, H/2, H
                     pred_disp = pred_disp_pyramid[-1]
+                    print(pred_disp.size())
+                    
                     mask = (gt_disp > 0) & (gt_disp < 192)
-
                     loss = self.test_criterion(pred_disp_pyramid, gt_disp, mask)
                     # measure accuracy and record loss
                     if not loss is None:
@@ -255,6 +257,10 @@ class RunManager:
                             'img_size': left.size(2),
                         })
                     t.update(1)
+
+                    #pred_disp = pred_disp.squeeze(0).data.cpu().numpy()
+                    #round_img = np.round(pred_disp*256)
+                    #skimage.io.imsave('valid_submit/%s'%(sample['disp_name'][0].split('/')[-1]), round_img.astype('uint16'))
         return losses.avg, self.get_metric_vals(metric_dict)
 
     def validate_all_resolution(self, epoch=0, is_test=False, net=None):
@@ -378,7 +384,7 @@ class RunManager:
                 'state_dict': self.network.state_dict(),
             }, is_best=is_best)
 
-    def reset_running_statistics(self, net=None, subset_size=200, subset_batch_size=20, data_loader=None):
+    def reset_running_statistics(self, net=None, subset_size=200, subset_batch_size=50, data_loader=None):
         from ofa.stereo_matching.elastic_nn.utils import set_running_statistics
         if net is None:
             net = self.network

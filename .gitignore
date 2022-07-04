@@ -113,3 +113,10 @@ venv.bak/
 *.xml
 *.iml
 /bash/distributed_imagenet.sh
+
+# customize
+data/
+exp/
+ofa_stereo_checkpoints/
+submit_results/
+*.zip

@@ -56,11 +56,29 @@ class StereoDataset(Dataset):
             'test': 'filenames/KITTI_2015_test.txt'
         }
 
+        kitti_2015_test = {
+            'train': 'filenames/KITTI_2015_test.txt',
+            'test': 'filenames/KITTI_2015_test.txt'
+        }
+
+        kitti_2012_test = {
+            'train': 'filenames/KITTI_2012_test.txt',
+            'test': 'filenames/KITTI_2012_test.txt'
+        }
+
+        kitti_sf_mix_dict = {
+            'train': 'filenames/sf_kitti_mix.txt',
+            'test': 'filenames/KITTI_mix.txt'
+        }
+
         dataset_name_dict = {
             'SceneFlow': sceneflow_finalpass_dict,
             'KITTI2012': kitti_2012_dict,
             'KITTI2015': kitti_2015_dict,
-            'KITTI_mix': kitti_mix_dict,
+            'KITTI_MIX': kitti_mix_dict,
+            'KITTI_SF_MIX': kitti_sf_mix_dict,
+            'KITTI_2015_TEST': kitti_2015_test,
+            'KITTI_2012_TEST': kitti_2012_test,
             'Sintel': sintel_dict,
         }
 
@@ -113,24 +131,25 @@ class StereoDataset(Dataset):
 
         sample['left'] = read_img(sample_path['left'])  # [H, W, 3]
         sample['right'] = read_img(sample_path['right'])
-        h, w, _ = sample['left'].shape
-        top_pad = 384-h
-        left_pad = 1296-w
-
-        if self.dataset_name in ['KITTI2012', 'KITTI2015']:
-            sample['left'] = np.lib.pad(sample['left'],((top_pad,0),(left_pad,0),(0,0)),mode='constant',constant_values=0)
-            sample['right'] = np.lib.pad(sample['right'],((top_pad,0),(left_pad,0),(0,0)),mode='constant',constant_values=0)
-
 
         # GT disparity of subset if negative, finalpass and cleanpass is positive
         subset = True if 'subset' in self.dataset_name else False
         if sample_path['disp'] is not None:
             sample['disp'] = read_disp(sample_path['disp'], subset=subset)  # [H, W]
-            if self.dataset_name in ['KITTI2012', 'KITTI2015']:
-                sample['disp'] = np.lib.pad(sample['disp'],((top_pad,0),(left_pad,0)),mode='constant',constant_values=0)
 
         if sample_path['pseudo_disp'] is not None:
             sample['pseudo_disp'] = read_disp(sample_path['pseudo_disp'], subset=subset)  # [H, W]
+
+        sample['disp_name'] = sample_path['left']
+
+        # padding for KITTI
+        if self.dataset_name in ['KITTI2012', 'KITTI2015', 'KITTI_MIX', 'KITTI_SF_MIX']:
+            h, w, _ = sample['left'].shape
+            top_pad = 544-h
+            left_pad = 1296-w
+            sample['left'] = np.lib.pad(sample['left'],((top_pad,0),(left_pad,0),(0,0)),mode='constant',constant_values=0)
+            sample['right'] = np.lib.pad(sample['right'],((top_pad,0),(left_pad,0),(0,0)),mode='constant',constant_values=0)
+            sample['disp'] = np.lib.pad(sample['disp'],((top_pad,0),(left_pad,0)),mode='constant',constant_values=0)
 
         if self.transform is not None:
             sample = self.transform(sample)

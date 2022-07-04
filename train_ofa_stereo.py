@@ -20,157 +20,26 @@ from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import load_m
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--task', type=str, default='large', choices=[
-    'kernel', 'depth', 'expand', 'scale', 'large', 'final'
+    'kernel',
+    'depth',
+    'expand',
+    'scale',
+    'large',
+    'final',
+    'kitti2012',
+    'kitti2015',
+    'kitti_mix',
+    'kitti_sf_mix',
 ])
 parser.add_argument('--phase', type=int, default=1, choices=[1, 2])
 parser.add_argument('--resume', action='store_true')
 
 args = parser.parse_args()
-if args.task == 'large':
-    args.path = 'exp/normal'
-    args.dynamic_batch_size = 1
-    args.n_epochs = 64
-    args.base_lr = 1e-3
-    args.warmup_epochs = 0
-    args.warmup_lr = -1
-    args.ks_list = '7'
-    args.expand_list = '8'
-    args.depth_list = '4'
-    args.scale_list = '4'
-elif args.task == 'kernel':
-    args.path = 'exp/normal2kernel'
-    args.dynamic_batch_size = 1
-    args.n_epochs = 25
-    args.base_lr = 5e-4
-    args.warmup_epochs = 2
-    args.warmup_lr = -1
-    args.ks_list = '3,5,7'
-    args.expand_list = '8'
-    args.depth_list = '4'
-    args.scale_list = '4'
-elif args.task == 'depth':
-    #args.path = 'exp/kernel2kernel_depth/phase%d' % args.phase
-    args.path = 'exp/kernel2kernel_depth'
-    args.dynamic_batch_size = 2
-    args.n_epochs = 25
-    args.base_lr = 5e-4
-    args.warmup_epochs = 2
-    args.warmup_lr = -1
-    args.ks_list = '3,5,7'
-    args.expand_list = '8'
-    args.depth_list = '2,3,4'
-    args.scale_list = '4'
-    #if args.phase == 1:
-    #    args.n_epochs = 25
-    #    args.base_lr = 2.5e-3
-    #    args.warmup_epochs = 0
-    #    args.warmup_lr = -1
-    #    args.ks_list = '3,5,7'
-    #    args.expand_list = '6'
-    #    args.depth_list = '3,4'
-    #elif args.phase == 2:
-    #    args.n_epochs = 120
-    #    args.base_lr = 7.5e-3
-    #    args.warmup_epochs = 5
-    #    args.warmup_lr = -1
-    #    args.ks_list = '3,5,7'
-    #    args.expand_list = '6'
-    #    args.depth_list = '2,3,4'
-    #else:
-    #    args.n_epochs = 120
-    #    args.base_lr = 7.5e-3
-    #    args.warmup_epochs = 5
-    #    args.warmup_lr = -1
-    #    args.ks_list = '3,5,7'
-    #    args.expand_list = '6'
-    #    args.depth_list = '1,2,3,4'
-elif args.task == 'expand':
-    #args.path = 'exp/kernel_depth2kernel_depth_width/phase%d' % args.phase
-    args.path = 'exp/kernel_depth2kernel_depth_width'
-    args.dynamic_batch_size = 4
-    args.n_epochs = 25
-    args.base_lr = 5e-4
-    args.warmup_epochs = 2
-    args.warmup_lr = -1
-    args.ks_list = '3,5,7'
-    args.expand_list = '2,4,6,8'
-    args.depth_list = '2,3,4'
-    args.scale_list = '4'
-    #if args.phase == 1:
-    #    args.n_epochs = 25
-    #    args.base_lr = 2.5e-3
-    #    args.warmup_epochs = 0
-    #    args.warmup_lr = -1
-    #    args.ks_list = '3,5,7'
-    #    args.expand_list = '3,4,6'
-    #    args.depth_list = '2,3,4'
-    #    args.scale_list = '4'
-    #elif args.phase == 2:
-    #    args.n_epochs = 25
-    #    args.base_lr = 7.5e-4
-    #    args.warmup_epochs = 5
-    #    args.warmup_lr = -1
-    #    args.ks_list = '3,5,7'
-    #    args.expand_list = '3,4,6'
-    #    args.depth_list = '2,3,4'
-    #    args.scale_list = '4'
-    #else:
-    #    args.n_epochs = 25
-    #    args.base_lr = 7.5e-4
-    #    args.warmup_epochs = 5
-    #    args.warmup_lr = -1
-    #    args.ks_list = '3,5,7'
-    #    args.expand_list = '2,3,4,6'
-    #    args.depth_list = '1,2,3,4'
-    #    args.scale_list = '4'
-elif args.task == 'scale':
-    #args.path = 'exp/kernel_depth_width2kernel_depth_width_scale/phase%d' % args.phase
-    args.path = 'exp/kernel_depth_width2kernel_depth_width_scale'
-    args.dynamic_batch_size = 6
-    args.n_epochs = 25
-    args.base_lr = 5e-4
-    args.warmup_epochs = 2
-    args.warmup_lr = -1
-    args.ks_list = '3,5,7'
-    args.expand_list = '2,4,6,8'
-    args.depth_list = '2,3,4'
-    args.scale_list = '2,3,4'
-    #if args.phase == 1:
-    #    args.n_epochs = 25
-    #    args.base_lr = 2.5e-3
-    #    args.warmup_epochs = 0
-    #    args.warmup_lr = -1
-    #    args.ks_list = '3,5,7'
-    #    args.expand_list = '3,4,6'
-    #    args.depth_list = '2,3,4'
-    #    args.scale_list = '4'
-    #else:
-    #    args.n_epochs = 25
-    #    args.base_lr = 2.5e-3
-    #    args.warmup_epochs = 5
-    #    args.warmup_lr = -1
-    #    args.ks_list = '3,5,7'
-    #    args.expand_list = '2,3,4,6'
-    #    args.depth_list = '2,3,4'
-    #    args.scale_list = '2,3,4'
-elif args.task == 'final': # extremely small network
-    #args.path = 'exp/kernel_depth_width2kernel_depth_width_scale/phase%d' % args.phase
-    args.path = 'exp/final'
-    args.dynamic_batch_size = 6
-    args.n_epochs = 25
-    args.base_lr = 2.5e-4
-    args.warmup_epochs = 2
-    args.warmup_lr = -1
-    args.ks_list = '3,5,7'
-    args.expand_list = '2,4,6,8'
-    args.depth_list = '2,3,4'
-    args.scale_list = '2,3,4'
-else:
-    raise NotImplementedError
-args.manual_seed = 0
 
-#args.lr_schedule_type = 'cosine'
-args.lr_schedule_type = 'multistep-10-0.5'
+args.manual_seed = 0
+args.dataname = 'SceneFlow'
+
+args.lr_schedule_type = 'cosine'
 
 args.base_batch_size = 2
 args.valid_size = None
@@ -206,6 +75,83 @@ args.independent_distributed_sampling = False
 args.kd_ratio = 1.0
 args.kd_type = 'ce'
 
+if args.task == 'large':
+    args.path = 'exp/normal'
+    args.dynamic_batch_size = 1
+    args.n_epochs = 64
+    args.base_lr = 1e-3
+    args.warmup_epochs = 0
+    args.warmup_lr = -1
+    args.ks_list = '7'
+    args.expand_list = '8'
+    args.depth_list = '4'
+    args.scale_list = '4'
+elif args.task == 'kernel':
+    args.path = 'exp/normal2kernel'
+    args.dynamic_batch_size = 1
+    args.n_epochs = 25
+    args.base_lr = 5e-4
+    args.warmup_epochs = 2
+    args.warmup_lr = -1
+    args.ks_list = '3,5,7'
+    args.expand_list = '8'
+    args.depth_list = '4'
+    args.scale_list = '4'
+elif args.task == 'depth':
+    args.path = 'exp/kernel2kernel_depth'
+    args.dynamic_batch_size = 2
+    args.n_epochs = 25
+    args.base_lr = 5e-4
+    args.warmup_epochs = 2
+    args.warmup_lr = -1
+    args.ks_list = '3,5,7'
+    args.expand_list = '8'
+    args.depth_list = '2,3,4'
+    args.scale_list = '4'
+elif args.task == 'expand':
+    args.path = 'exp/kernel_depth2kernel_depth_width'
+    args.dynamic_batch_size = 4
+    args.n_epochs = 25
+    args.base_lr = 5e-4
+    args.warmup_epochs = 2
+    args.warmup_lr = -1
+    args.ks_list = '3,5,7'
+    args.expand_list = '2,4,6,8'
+    args.depth_list = '2,3,4'
+    args.scale_list = '4'
+elif args.task == 'scale':
+    args.path = 'exp/kernel_depth_width2kernel_depth_width_scale'
+    args.dynamic_batch_size = 6
+    args.n_epochs = 25
+    args.base_lr = 5e-4
+    args.warmup_epochs = 2
+    args.warmup_lr = -1
+    args.ks_list = '3,5,7'
+    args.expand_list = '2,4,6,8'
+    args.depth_list = '2,3,4'
+    args.scale_list = '2,3,4'
+elif args.task in ['kitti2012', 'kitti2015', 'kitti_mix', 'kitti_sf_mix']: # finetune on kitti
+    args.path = 'exp/%s' % args.task
+    args.dynamic_batch_size = 6
+    args.n_epochs = 400    # since the dynamic batch size leads to multiple step.
+    args.warmup_epochs = 0
+    args.warmup_lr = -1
+    args.ks_list = '3,5,7'
+    args.expand_list = '2,4,6,8'
+    args.depth_list = '2,3,4'
+    args.scale_list = '2,3,4'
+    args.datapath = '/datasets/'
+    if args.task == 'kitti2012':
+        args.datapath = '/datasets/kitti2012'
+    if args.task == 'kitti2015':
+        args.datapath = '/datasets/kitti2015'
+    args.dataname = args.task.upper()
+    from ofa.stereo_matching.data_providers.stereo import StereoDataProvider
+    StereoDataProvider.DEFAULT_PATH = args.datapath
+    args.lr_schedule_type = 'multistep-100-0.5'
+    args.base_lr = 1e-4
+else:
+    raise NotImplementedError
 
 if __name__ == '__main__':
     torch.multiprocessing.set_start_method('spawn')
@@ -293,66 +239,29 @@ if __name__ == '__main__':
     elif args.task == 'kernel':
         validate_func_dict['ks_list'] = sorted(args.ks_list)
         if distributed_run_manager.start_epoch == 0:
-            #args.ofa_checkpoint_path = download_url(
-            #    'localhost/ofa_stereo_D4_E6_K7',
-            #    model_dir='ofa_stereo_checkpoints/ofa_stereo_D4_E6_K7'
-            #)
             args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K7_S4'
             load_models(distributed_run_manager, distributed_run_manager.net, args.ofa_checkpoint_path)
-            #distributed_run_manager.write_log(
-            #    '%.3f\t%.3f\t%.3f\t%s' % validate(distributed_run_manager, is_test=True, **validate_func_dict), 'valid')
         else:
             assert args.resume
         train(distributed_run_manager, args,
               lambda _run_manager, epoch, is_test: validate(_run_manager, epoch, is_test, **validate_func_dict))
     elif args.task == 'depth':
         from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import train_elastic_depth
-        if args.phase == 1:
-            #args.ofa_checkpoint_path = download_url(
-            #    #'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K357',
-            #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K7',
-            #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
-            #)
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K357_S4'
-        else:
-            #args.ofa_checkpoint_path = download_url(
-            #    #'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D34_E6_K357',
-            #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K7',
-            #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
-            #)
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K357_S4'
+        args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E8_K357_S4'
         train_elastic_depth(train, distributed_run_manager, args, validate_func_dict)
     elif args.task == 'expand':
         from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import train_elastic_expand
-        if args.phase == 1:
-            #args.ofa_checkpoint_path = download_url(
-            #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E8_K357_S4',
-            #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
-            #)
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E8_K357_S4'
-        else:
-            #args.ofa_checkpoint_path = download_url(
-            #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E46_K357',
-            #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
-            #)
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E8_K357_S4'
+        args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E8_K357_S4'
         train_elastic_expand(train, distributed_run_manager, args, validate_func_dict)
-    elif (args.task == 'scale') or (args.task == 'final'):
+    elif args.task == 'scale':
         from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import train_elastic_scale
-        if args.phase == 1:
-            #args.ofa_checkpoint_path = download_url(
-            #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E6_K357',
-            #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
-            #)
-            #args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D4_E6_K7_S4'
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E2468_K357_S4'
+        args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E2468_K357_S4'
+        train_elastic_scale(train, distributed_run_manager, args, validate_func_dict)
+    elif (args.task in ['kitti2012', 'kitti2015', 'kitti_mix', 'kitti_sf_mix']):
+        from ofa.stereo_matching.elastic_nn.training.progressive_shrinking import train_elastic_scale
+        if args.task in ['kitti2012', 'kitti2015']:
+            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/kitti_sf_mix'
         else:
-            #args.ofa_checkpoint_path = download_url(
-            #    'https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D234_E46_K357',
-            #    model_dir='.torch/ofa_checkpoints/%d' % hvd.rank()
-            #)
-            args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E2468_K357_S4'
-        if args.task == 'final':
             args.ofa_checkpoint_path = 'ofa_stereo_checkpoints/ofa_stereo_D234_E2468_K357_S234'
         train_elastic_scale(train, distributed_run_manager, args, validate_func_dict)
     else:

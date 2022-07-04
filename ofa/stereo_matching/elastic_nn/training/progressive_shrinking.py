@@ -44,20 +44,35 @@ def validate(run_manager, epoch=0, is_test=False, image_size_list=None,
             width_mult_list = [0]
 
     subnet_settings = []
-    for d in depth_list:
-        for e in expand_ratio_list:
-            for k in ks_list:
-                for s in scale_list:
-                    for w in width_mult_list:
-                        for img_size in image_size_list:
-                            subnet_settings.append([{
-                                'image_size': img_size,
-                                'd': d,
-                                'e': e,
-                                'ks': k,
-                                's': s,
-                                'w': w,
-                            }, 'R%s-D%s-E%s-K%s-S%s-W%s' % (img_size, d, e, k, s, w)])
+    ds = [4, 2, 2]
+    es = [8, 8, 2]
+    ks = [7, 7, 3]
+    ss = [4, 2, 2]
+    img_size = 224
+    w = 0
+    for d,e,k,s in zip(ds,es,ks,ss):
+        subnet_settings.append([{
+            'image_size': img_size,
+            'd': d,
+            'e': e,
+            'ks': k,
+            's': s,
+            'w': w,
+        }, 'R%s-D%s-E%s-K%s-S%s-W%s' % (img_size, d, e, k, s, w)])
+    #for d in depth_list:
+    #    for e in expand_ratio_list:
+    #        for k in ks_list:
+    #            for s in scale_list:
+    #                for w in width_mult_list:
+    #                    for img_size in image_size_list:
+    #                        subnet_settings.append([{
+    #                            'image_size': img_size,
+    #                            'd': d,
+    #                            'e': e,
+    #                            'ks': k,
+    #                            's': s,
+    #                            'w': w,
+    #                        }, 'R%s-D%s-E%s-K%s-S%s-W%s' % (img_size, d, e, k, s, w)])
     if additional_setting is not None:
         subnet_settings += additional_setting
 
@@ -144,19 +159,22 @@ def train_one_epoch(run_manager, args, epoch, warmup_epochs=0, warmup_lr=0):
 
                     # measure accuracy and record loss
                     loss = run_manager.train_criterion(pred_disp_pyramid, gt_disp, mask)
-                    loss_of_subnets.append(loss)
-                    run_manager.update_metric(metric_dict, pred_disp, gt_disp, mask)
 
-                    loss.backward()
+                    if loss is not None:
+                        loss_of_subnets.append(loss)
+                        run_manager.update_metric(metric_dict, pred_disp, gt_disp, mask)
+
+                        loss.backward()
             else:
                 pred_disp_pyramid = run_manager.net(left, right)  # list of H/12, H/6, H/3, H/2, H
                 pred_disp = pred_disp_pyramid[-1]
                 mask = (gt_disp > 0) & (gt_disp < 192)
 
                 total_loss = run_manager.train_criterion(pred_disp_pyramid, gt_disp, mask)
-                loss_of_subnets.append(total_loss)
-                run_manager.update_metric(metric_dict, pred_disp, gt_disp, mask)
-                total_loss.backward()
+                if loss is not None:
+                    loss_of_subnets.append(total_loss)
+                    run_manager.update_metric(metric_dict, pred_disp, gt_disp, mask)
+                    total_loss.backward()
 
             run_manager.optimizer.step()
 

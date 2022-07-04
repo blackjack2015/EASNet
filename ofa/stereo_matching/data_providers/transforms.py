@@ -130,7 +130,8 @@ class RandomVerticalFlip(object):
             sample['left'] = np.copy(np.flipud(sample['left']))
             sample['right'] = np.copy(np.flipud(sample['right']))
 
-            sample['disp'] = np.copy(np.flipud(sample['disp']))
+            if 'disp' in sample:
+                sample['disp'] = np.copy(np.flipud(sample['disp']))
 
             if 'pseudo_disp' in sample.keys():
                 sample['pseudo_disp'] = np.copy(np.flipud(sample['pseudo_disp']))
