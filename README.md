@@ -4,12 +4,12 @@ EASNet: Searching Elastic and Accurate Network Architecture for Stereo Matching 
 PyTorch implementation of searching an efficient network architecture for stereo matching. Please cite the paper below if you use this project. Any suggestion, fork, and pull request is welcome. 
 ```BibTex
 @inproceedings{
-  cai2020once,
-  title={Once for All: Train One Network and Specialize it for Efficient Deployment},
-  author={Han Cai and Chuang Gan and Tianzhe Wang and Zhekai Zhang and Song Han},
-  booktitle={International Conference on Learning Representations},
-  year={2020},
-  url={https://arxiv.org/pdf/1908.09791.pdf}
+  wang2022easnet,
+  title={EASNet: Searching Elastic and Accurate Network Architecture for Stereo Matching},
+  author={Qiang Wang and Shaohuai Shi and Kaiyong Zhao and Xiaowen Chu},
+  booktitle={European Conference on Computer Vision},
+  year={2022},
+  url={https://arxiv.org/pdf/xxxx.xxxxx.pdf}
 }
 ```
 
